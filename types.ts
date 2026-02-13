@@ -9,15 +9,16 @@ export enum TransactionType {
   WITHDRAWAL = 'Withdrawal'
 }
 
-export enum Category {
-  FOOD = 'Food',
-  GAMES = 'Games',
-  SAVINGS = 'Savings Goal',
-  GIFTS = 'Gifts',
-  ENTERTAINMENT = 'Entertainment',
-  ALLOWANCE = 'Allowance',
-  OTHER = 'Other'
-}
+export const DEFAULT_CATEGORIES = [
+  'Food',
+  'Games',
+  'Savings Goal',
+  'Gifts',
+  'Entertainment',
+  'Allowance',
+  'Chores',
+  'Other'
+];
 
 export interface Transaction {
   id: string;
@@ -26,7 +27,7 @@ export interface Transaction {
   type: TransactionType;
   account: AccountType;
   comment: string;
-  category: Category;
+  category: string; // Changed from enum to string for custom entries
 }
 
 export interface ChartDataPoint {

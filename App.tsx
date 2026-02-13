@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, LayoutDashboard, History, FileText, TrendingUp, Sparkles, LogOut } from 'lucide-react';
+import { Plus, LayoutDashboard, History, FileText, TrendingUp, Check } from 'lucide-react';
 import { Transaction, AccountType, TransactionType } from './types';
 import Dashboard from './components/Dashboard';
 import Ledger from './components/Ledger';
@@ -19,6 +20,7 @@ const App: React.FC = () => {
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [aiInsight, setAiInsight] = useState<string>('');
   const [isLoadingInsight, setIsLoadingInsight] = useState(false);
+  const [accountFilter, setAccountFilter] = useState<AccountType | 'all'>('all');
 
   useEffect(() => {
     localStorage.setItem('ryan-money-monitor-data', JSON.stringify(transactions));
@@ -62,6 +64,15 @@ const App: React.FC = () => {
     setIsLoadingInsight(false);
   };
 
+  const toggleAccountFilter = (acc: AccountType) => {
+    setAccountFilter(prev => prev === acc ? 'all' : acc);
+  };
+
+  const filteredTransactions = useMemo(() => {
+    if (accountFilter === 'all') return transactions;
+    return transactions.filter(t => t.account === accountFilter);
+  }, [transactions, accountFilter]);
+
   return (
     <div className="h-screen flex flex-col md:flex-row bg-[#f8fafc] text-slate-900 overflow-hidden">
       {/* Desktop Sidebar */}
@@ -71,7 +82,7 @@ const App: React.FC = () => {
             <TrendingUp size={28} className="text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-black tracking-tight leading-none uppercase">Monitor</h1>
+            <h1 className="text-xl font-black tracking-tight leading-none uppercase text-white">Monitor</h1>
             <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Ryan's Finances</p>
           </div>
         </div>
@@ -137,29 +148,56 @@ const App: React.FC = () => {
                 <h2 className="text-3xl md:text-4xl font-black text-slate-900 leading-tight">
                   Portfolio <span className="text-indigo-600">Overview</span>
                 </h2>
-                <p className="text-slate-500 font-medium mt-1">Real-time tracking of your liquidity.</p>
+                <p className="text-slate-500 font-medium mt-1">Select an account to filter your history.</p>
               </div>
               
               <div className="flex items-center space-x-3 w-full md:w-auto">
-                <div className="flex-1 md:min-w-[160px] bg-white p-5 rounded-[2rem] shadow-sm border border-slate-200 group transition-all hover:shadow-md">
+                {/* Checking Card */}
+                <button 
+                  onClick={() => toggleAccountFilter(AccountType.CHECKING)}
+                  className={`flex-1 md:min-w-[170px] p-5 rounded-[2rem] shadow-sm border-2 transition-all relative text-left active:scale-95 ${
+                    accountFilter === AccountType.CHECKING 
+                    ? 'bg-white border-indigo-600 ring-4 ring-indigo-600/20' 
+                    : 'bg-white border-transparent hover:border-slate-200'
+                  }`}
+                >
+                  {accountFilter === AccountType.CHECKING && (
+                    <div className="absolute top-4 right-4 bg-indigo-600 text-white rounded-full p-0.5">
+                      <Check size={12} strokeWidth={4} />
+                    </div>
+                  )}
                   <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Checking</p>
                   <p className={`text-2xl font-black tracking-tighter ${balances.checking >= 0 ? 'text-indigo-600' : 'text-rose-600'}`}>
                     ${balances.checking.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </p>
-                </div>
-                <div className="flex-1 md:min-w-[160px] bg-indigo-600 p-5 rounded-[2rem] shadow-xl shadow-indigo-100 text-white transition-transform hover:scale-105">
-                  <p className="text-[10px] font-black text-indigo-200 uppercase tracking-widest mb-1.5">Savings</p>
+                </button>
+
+                {/* Savings Card */}
+                <button 
+                  onClick={() => toggleAccountFilter(AccountType.SAVINGS)}
+                  className={`flex-1 md:min-w-[170px] p-5 rounded-[2rem] shadow-xl transition-all relative text-left active:scale-95 ${
+                    accountFilter === AccountType.SAVINGS 
+                    ? 'bg-indigo-600 text-white ring-4 ring-indigo-600/30 border-2 border-white/20' 
+                    : 'bg-indigo-500 text-white border-2 border-transparent'
+                  }`}
+                >
+                  {accountFilter === AccountType.SAVINGS && (
+                    <div className="absolute top-4 right-4 bg-white text-indigo-600 rounded-full p-0.5">
+                      <Check size={12} strokeWidth={4} />
+                    </div>
+                  )}
+                  <p className={`text-[10px] font-black uppercase tracking-widest mb-1.5 ${accountFilter === AccountType.SAVINGS ? 'text-indigo-100' : 'text-indigo-100/70'}`}>Savings</p>
                   <p className="text-2xl font-black tracking-tighter">
                     ${balances.savings.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                   </p>
-                </div>
+                </button>
               </div>
             </section>
 
             <div className="tab-content">
               {activeTab === 'dashboard' ? (
                 <Dashboard 
-                  transactions={transactions} 
+                  transactions={filteredTransactions} 
                   balances={balances} 
                   aiInsight={aiInsight}
                   onRefreshInsight={fetchInsights}
@@ -167,7 +205,7 @@ const App: React.FC = () => {
                 />
               ) : (
                 <Ledger 
-                  transactions={transactions} 
+                  transactions={filteredTransactions} 
                   onEdit={handleEditRequest} 
                   onDelete={handleDeleteTransaction}
                 />
