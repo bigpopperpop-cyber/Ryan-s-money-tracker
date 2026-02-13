@@ -7,9 +7,10 @@ interface LedgerProps {
   transactions: Transaction[];
   onEdit: (t: Transaction) => void;
   onDelete: (id: string) => void;
+  isReadOnly?: boolean;
 }
 
-const Ledger: React.FC<LedgerProps> = ({ transactions, onEdit, onDelete }) => {
+const Ledger: React.FC<LedgerProps> = ({ transactions, onEdit, onDelete, isReadOnly = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
   const [filterAccount, setFilterAccount] = useState<string>('all');
@@ -32,7 +33,6 @@ const Ledger: React.FC<LedgerProps> = ({ transactions, onEdit, onDelete }) => {
     if (normalized.includes('allowance')) return 'bg-indigo-100 text-indigo-700';
     if (normalized.includes('gift')) return 'bg-pink-100 text-pink-700';
     if (normalized.includes('chore')) return 'bg-blue-100 text-blue-700';
-    // Fallback for custom categories
     return 'bg-slate-100 text-slate-600 border border-slate-200';
   };
 
@@ -86,27 +86,36 @@ const Ledger: React.FC<LedgerProps> = ({ transactions, onEdit, onDelete }) => {
                 <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">{t.date}</p>
               </div>
             </div>
-            <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-              <div className="flex space-x-2">
-                <button 
-                  onClick={() => onEdit(t)}
-                  className="flex items-center space-x-1.5 px-4 py-2 bg-slate-50 text-slate-600 rounded-xl text-[10px] font-black uppercase transition active:scale-95 border border-slate-100"
-                >
-                  <Edit3 size={14} strokeWidth={2.5} />
-                  <span>Modify</span>
-                </button>
-                <button 
-                  onClick={() => onDelete(t.id)}
-                  className="flex items-center space-x-1.5 px-4 py-2 bg-rose-50 text-rose-600 rounded-xl text-[10px] font-black uppercase transition active:scale-95 border border-rose-100"
-                >
-                  <Trash2 size={14} strokeWidth={2.5} />
-                  <span>Erase</span>
-                </button>
+            {!isReadOnly && (
+              <div className="flex items-center justify-between pt-4 border-t border-slate-50">
+                <div className="flex space-x-2">
+                  <button 
+                    onClick={() => onEdit(t)}
+                    className="flex items-center space-x-1.5 px-4 py-2 bg-slate-50 text-slate-600 rounded-xl text-[10px] font-black uppercase transition active:scale-95 border border-slate-100"
+                  >
+                    <Edit3 size={14} strokeWidth={2.5} />
+                    <span>Modify</span>
+                  </button>
+                  <button 
+                    onClick={() => onDelete(t.id)}
+                    className="flex items-center space-x-1.5 px-4 py-2 bg-rose-50 text-rose-600 rounded-xl text-[10px] font-black uppercase transition active:scale-95 border border-rose-100"
+                  >
+                    <Trash2 size={14} strokeWidth={2.5} />
+                    <span>Erase</span>
+                  </button>
+                </div>
+                <div className="w-8 h-8 flex items-center justify-center bg-slate-50 rounded-full">
+                  {t.account === AccountType.SAVINGS ? <Landmark size={14} className="text-indigo-400" /> : <Calendar size={14} className="text-slate-400" />}
+                </div>
               </div>
-              <div className="w-8 h-8 flex items-center justify-center bg-slate-50 rounded-full">
-                {t.account === AccountType.SAVINGS ? <Landmark size={14} className="text-indigo-400" /> : <Calendar size={14} className="text-slate-400" />}
-              </div>
-            </div>
+            )}
+            {isReadOnly && (
+               <div className="flex items-center justify-end pt-4 border-t border-slate-50">
+                  <div className="w-8 h-8 flex items-center justify-center bg-slate-50 rounded-full">
+                    {t.account === AccountType.SAVINGS ? <Landmark size={14} className="text-indigo-400" /> : <Calendar size={14} className="text-slate-400" />}
+                  </div>
+               </div>
+            )}
           </div>
         )) : (
           <div className="py-20 text-center space-y-4">
