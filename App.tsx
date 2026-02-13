@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect, useMemo } from 'react';
-import { Plus, LayoutDashboard, History, FileText, TrendingUp, Check } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Plus, LayoutDashboard, History, FileText, TrendingUp, Check, Download, Upload, CheckCircle } from 'lucide-react';
 import { Transaction, AccountType, TransactionType } from './types';
 import Dashboard from './components/Dashboard';
 import Ledger from './components/Ledger';
@@ -21,9 +21,15 @@ const App: React.FC = () => {
   const [aiInsight, setAiInsight] = useState<string>('');
   const [isLoadingInsight, setIsLoadingInsight] = useState(false);
   const [accountFilter, setAccountFilter] = useState<AccountType | 'all'>('all');
+  const [showSavedToast, setShowSavedToast] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     localStorage.setItem('ryan-money-monitor-data', JSON.stringify(transactions));
+    // Brief visual confirmation for "Autosave"
+    setShowSavedToast(true);
+    const timer = setTimeout(() => setShowSavedToast(false), 2000);
+    return () => clearTimeout(timer);
   }, [transactions]);
 
   const balances = useMemo(() => {
@@ -73,21 +79,59 @@ const App: React.FC = () => {
     return transactions.filter(t => t.account === accountFilter);
   }, [transactions, accountFilter]);
 
+  const exportData = () => {
+    const dataStr = JSON.stringify(transactions, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    const exportFileDefaultName = `ryan-money-backup-${new Date().toISOString().split('T')[0]}.json`;
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+  };
+
+  const importData = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      try {
+        const json = JSON.parse(e.target?.result as string);
+        if (Array.isArray(json) && window.confirm('This will replace your current records with the ones from the file. Continue?')) {
+          setTransactions(json);
+        }
+      } catch (err) {
+        alert('Oops! That file doesn\'t look like a valid backup.');
+      }
+    };
+    reader.readAsText(file);
+    // Reset file input
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   return (
     <div className="h-screen flex flex-col md:flex-row bg-[#f8fafc] text-slate-900 overflow-hidden">
       {/* Desktop Sidebar */}
       <aside className="no-print hidden md:flex w-72 bg-slate-900 text-white p-8 flex-col space-y-8 sticky top-0 h-screen">
-        <div className="flex items-center space-x-3">
-          <div className="p-2.5 bg-indigo-500 rounded-2xl shadow-lg shadow-indigo-500/20">
-            <TrendingUp size={28} className="text-white" />
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="p-2.5 bg-indigo-500 rounded-2xl shadow-lg shadow-indigo-500/20">
+              <TrendingUp size={28} className="text-white" />
+            </div>
+            <div>
+              <h1 className="text-xl font-black tracking-tight leading-none uppercase text-white">Monitor</h1>
+              <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Ryan's Finances</p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-xl font-black tracking-tight leading-none uppercase text-white">Monitor</h1>
-            <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-widest">Ryan's Finances</p>
-          </div>
+          {showSavedToast && (
+            <div className="animate-pulse">
+              <CheckCircle size={18} className="text-green-400" />
+            </div>
+          )}
         </div>
 
-        <nav className="flex-1 space-y-3">
+        <nav className="flex-1 space-y-2">
           <button 
             onClick={() => setActiveTab('dashboard')}
             className={`w-full flex items-center space-x-4 px-5 py-4 rounded-2xl transition-all duration-300 ${activeTab === 'dashboard' ? 'bg-indigo-600 shadow-xl shadow-indigo-600/30' : 'hover:bg-slate-800 opacity-60 hover:opacity-100'}`}
@@ -119,6 +163,32 @@ const App: React.FC = () => {
             <FileText size={18} />
             <span>Reports</span>
           </button>
+          
+          <div className="grid grid-cols-2 gap-2 mt-4">
+            <button 
+              onClick={exportData}
+              title="Save a backup file"
+              className="flex items-center justify-center space-x-2 py-3 bg-slate-800/50 hover:bg-slate-800 text-slate-400 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition"
+            >
+              <Download size={14} />
+              <span>Backup</span>
+            </button>
+            <button 
+              onClick={() => fileInputRef.current?.click()}
+              title="Import from a backup file"
+              className="flex items-center justify-center space-x-2 py-3 bg-slate-800/50 hover:bg-slate-800 text-slate-400 hover:text-white rounded-xl text-[10px] font-black uppercase tracking-widest transition"
+            >
+              <Upload size={14} />
+              <span>Restore</span>
+            </button>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              className="hidden" 
+              accept=".json" 
+              onChange={importData} 
+            />
+          </div>
         </div>
       </aside>
 
@@ -131,6 +201,7 @@ const App: React.FC = () => {
               <TrendingUp size={20} className="text-white" />
             </div>
             <h1 className="text-xl font-black tracking-tighter text-slate-900 uppercase">Ryan</h1>
+            {showSavedToast && <CheckCircle size={16} className="text-green-500 ml-1" />}
           </div>
           <button 
             onClick={() => setIsReportOpen(true)}
