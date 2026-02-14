@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Plus, LayoutDashboard, History, FileText, TrendingUp, Download, Upload, CheckCircle, Share2, X, Info, Settings2, Save, DollarSign, RefreshCcw } from 'lucide-react';
+import { Plus, LayoutDashboard, History, FileText, TrendingUp, CheckCircle, Share2, X, Info, Settings2, Menu, Sparkles, RefreshCcw } from 'lucide-react';
 import { Transaction, AccountType, TransactionType, DEFAULT_CATEGORIES } from './types';
 import Dashboard from './components/Dashboard';
 import Ledger from './components/Ledger';
@@ -30,6 +30,7 @@ const App: React.FC = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isReportOpen, setIsReportOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [aiInsight, setAiInsight] = useState<string>('');
   const [isLoadingInsight, setIsLoadingInsight] = useState(false);
@@ -42,7 +43,6 @@ const App: React.FC = () => {
   const [isPulling, setIsPulling] = useState(false);
   const startY = useRef(0);
   const mainRef = useRef<HTMLElement>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -94,10 +94,8 @@ const App: React.FC = () => {
     const diff = currentY - startY.current;
     
     if (diff > 0 && mainRef.current && mainRef.current.scrollTop === 0) {
-      // Add resistance to the pull
       const resistedDiff = Math.pow(diff, 0.8);
       setPullDistance(Math.min(resistedDiff, 100));
-      // Prevent default browser refresh/scroll behavior during pull
       if (diff > 10) e.preventDefault();
     } else {
       setIsPulling(false);
@@ -187,7 +185,7 @@ const App: React.FC = () => {
   return (
     <div className="h-full flex flex-col md:flex-row bg-[#f8fafc] text-slate-900 overflow-hidden select-none">
       {isSharedMode && (
-        <div className="fixed top-0 left-0 right-0 z-[60] bg-indigo-600 text-white pt-10 pb-3 px-4 flex items-center justify-between shadow-xl">
+        <div className="fixed top-0 left-0 right-0 z-[120] bg-indigo-600 text-white pt-10 pb-3 px-4 flex items-center justify-between shadow-xl">
           <div className="flex items-center space-x-2">
             <Info size={16} />
             <span className="text-xs font-black uppercase tracking-tighter">Shared View</span>
@@ -200,7 +198,7 @@ const App: React.FC = () => {
 
       {/* Pull-to-refresh Indicator */}
       <div 
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center pointer-events-none transition-all duration-200"
+        className="fixed top-0 left-0 right-0 z-[110] flex items-center justify-center pointer-events-none transition-all duration-200"
         style={{ 
           height: `${pullDistance}px`, 
           opacity: pullDistance / 60,
@@ -212,7 +210,60 @@ const App: React.FC = () => {
         </div>
       </div>
 
-      {/* Desktop Sidebar */}
+      {/* Mobile Sidebar Drawer */}
+      <div 
+        className={`fixed inset-0 z-[200] transition-opacity duration-300 md:hidden ${isDrawerOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
+        onClick={() => setIsDrawerOpen(false)}
+      >
+        <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" />
+        <aside 
+          className={`absolute left-0 top-0 bottom-0 w-[80%] max-w-xs bg-white shadow-2xl transition-transform duration-300 ease-out flex flex-col ${isDrawerOpen ? 'translate-x-0' : '-translate-x-full'}`}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="pt-[env(safe-area-inset-top,48px)] p-8 border-b border-slate-100">
+            <div className="flex items-center justify-between">
+               <div className="flex items-center space-x-3">
+                <div className="p-2 bg-indigo-600 rounded-xl shadow-lg"><TrendingUp size={20} className="text-white" /></div>
+                <h2 className="text-xl font-black uppercase tracking-tighter">Menu</h2>
+              </div>
+              <button onClick={() => setIsDrawerOpen(false)} className="p-2 text-slate-400 bg-slate-50 rounded-full ios-tap"><X size={20} /></button>
+            </div>
+          </div>
+          
+          <nav className="flex-1 p-6 space-y-2 overflow-y-auto">
+             <button onClick={() => { setActiveTab('dashboard'); setIsDrawerOpen(false); }} className={`w-full flex items-center space-x-4 px-5 py-5 rounded-2xl transition-all ${activeTab === 'dashboard' ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-100' : 'text-slate-500 active:bg-slate-100'}`}>
+                <LayoutDashboard size={24} strokeWidth={2.5} />
+                <span className="font-bold text-lg">Dashboard</span>
+             </button>
+             <button onClick={() => { setActiveTab('ledger'); setIsDrawerOpen(false); }} className={`w-full flex items-center space-x-4 px-5 py-5 rounded-2xl transition-all ${activeTab === 'ledger' ? 'bg-indigo-600 text-white shadow-xl shadow-indigo-100' : 'text-slate-500 active:bg-slate-100'}`}>
+                <History size={24} strokeWidth={2.5} />
+                <span className="font-bold text-lg">Activity History</span>
+             </button>
+             <div className="h-px bg-slate-100 my-4" />
+             <button onClick={() => { setIsReportOpen(true); setIsDrawerOpen(false); }} className="w-full flex items-center space-x-4 px-5 py-5 rounded-2xl text-slate-500 active:bg-slate-100">
+                <FileText size={24} />
+                <span className="font-bold text-lg">Reports & Printing</span>
+             </button>
+             <button onClick={() => { setIsSettingsOpen(true); setIsDrawerOpen(false); }} className="w-full flex items-center space-x-4 px-5 py-5 rounded-2xl text-slate-500 active:bg-slate-100">
+                <Settings2 size={24} />
+                <span className="font-bold text-lg">Starting Fund</span>
+             </button>
+             <button onClick={() => { generateShareLink(); setIsDrawerOpen(false); }} className="w-full flex items-center space-x-4 px-5 py-5 rounded-2xl text-slate-500 active:bg-slate-100">
+                <Share2 size={24} />
+                <span className="font-bold text-lg">Share Progress</span>
+             </button>
+          </nav>
+
+          <div className="p-8 border-t border-slate-100 bg-slate-50/50">
+             <div className="flex items-center space-x-3 text-slate-400">
+                <Info size={16} />
+                <span className="text-[10px] font-black uppercase tracking-widest">Ryan's Money Monitor v2.1</span>
+             </div>
+          </div>
+        </aside>
+      </div>
+
+      {/* Desktop Sidebar (Static) */}
       <aside className={`no-print hidden md:flex w-72 bg-slate-900 text-white p-8 flex-col space-y-8 h-screen ${isSharedMode ? 'pt-24' : ''}`}>
         <div className="flex items-center space-x-3">
           <div className="p-2.5 bg-indigo-500 rounded-2xl shadow-lg">
@@ -259,15 +310,16 @@ const App: React.FC = () => {
         style={{ transform: `translateY(${pullDistance}px)` }}
       >
         <header className="md:hidden pt-[env(safe-area-inset-top,48px)] pb-4 px-6 bg-white/80 backdrop-blur-xl border-b border-slate-100 flex items-center justify-between sticky top-0 z-40">
+           <button onClick={() => setIsDrawerOpen(true)} className="p-2.5 bg-slate-50 rounded-2xl border border-slate-100 text-slate-900 ios-tap">
+             <Menu size={24} strokeWidth={3} />
+           </button>
+           
            <div className="flex items-center space-x-2">
-            <div className="p-1.5 bg-indigo-600 rounded-xl"><TrendingUp size={18} className="text-white" /></div>
-            <h1 className="text-xl font-black tracking-tighter text-slate-900 uppercase">Ryan</h1>
-            {!isSharedMode && showSavedToast && <CheckCircle size={16} className="text-green-500 ml-1" />}
+            <h1 className="text-xl font-black tracking-tighter text-slate-900 uppercase">Ryan's Money</h1>
+            {!isSharedMode && showSavedToast && <CheckCircle size={16} className="text-green-500" />}
           </div>
-          <div className="flex items-center space-x-2">
-            <button onClick={() => setIsSettingsOpen(true)} className="p-2.5 bg-slate-50 rounded-full border border-slate-100 ios-tap"><Settings2 size={20} className="text-slate-600" /></button>
-            <button onClick={() => setIsReportOpen(true)} className="p-2.5 bg-slate-50 rounded-full border border-slate-100 ios-tap"><FileText size={20} className="text-slate-600" /></button>
-          </div>
+          
+          <div className="w-10" /> {/* Spacer for symmetry */}
         </header>
 
         <main 
@@ -309,7 +361,7 @@ const App: React.FC = () => {
           </div>
         </main>
 
-        <nav className="no-print md:hidden fixed bottom-6 left-6 right-6 h-20 bg-slate-900 rounded-[2.5rem] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] border border-slate-800 flex items-center justify-between px-10 z-[80] animate-in slide-in-from-bottom-10 duration-500">
+        <nav className="no-print md:hidden fixed bottom-6 left-6 right-6 h-20 bg-slate-900 rounded-[2.5rem] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] border border-slate-800 flex items-center justify-between px-10 z-[150] animate-in slide-in-from-bottom-10 duration-500">
           <button 
             onClick={() => setActiveTab('dashboard')} 
             className={`flex flex-col items-center space-y-1 transition-all duration-300 ios-tap ${activeTab === 'dashboard' ? 'text-indigo-400 scale-110' : 'text-slate-500'}`}
@@ -338,7 +390,7 @@ const App: React.FC = () => {
       </div>
 
       {isSettingsOpen && (
-        <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in duration-300">
            <div className="bg-white w-full max-w-sm p-8 rounded-[3rem] shadow-2xl animate-in zoom-in-95 duration-200">
               <div className="flex items-center justify-between mb-6">
                 <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter">Starting Fund</h3>
