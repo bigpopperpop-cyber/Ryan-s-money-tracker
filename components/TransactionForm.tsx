@@ -1,17 +1,17 @@
 
 import React, { useState, useEffect } from 'react';
-import { Transaction, TransactionType, AccountType, DEFAULT_CATEGORIES } from '../types';
-import { X, Save, AlertCircle, DollarSign, Plus, Check } from 'lucide-react';
+import { Transaction, TransactionType, AccountType } from '../types';
+import { X, Save, AlertCircle, DollarSign, Plus } from 'lucide-react';
 
 interface TransactionFormProps {
   onClose: () => void;
   onSubmit: (t: Transaction) => void;
   onDeleteCategory: (cat: string) => void;
-  customCategories: string[];
+  categories: string[];
   initialData: Transaction | null;
 }
 
-const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSubmit, onDeleteCategory, customCategories, initialData }) => {
+const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSubmit, onDeleteCategory, categories, initialData }) => {
   const [formData, setFormData] = useState<Partial<Transaction>>({
     date: new Date().toISOString().split('T')[0],
     amount: undefined,
@@ -66,21 +66,16 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSubmit, on
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end justify-center bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-300">
-      {/* Click outside to close */}
       <div className="absolute inset-0" onClick={onClose}></div>
       
       <div className="relative bg-white w-full max-w-xl md:rounded-t-[3rem] rounded-t-[2.5rem] shadow-2xl overflow-hidden animate-in slide-in-from-bottom-full duration-500 ease-out pb-safe">
-        {/* iOS Grabber */}
         <div className="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mt-4 mb-2"></div>
 
         <div className="relative px-6 py-4 flex items-center justify-between">
           <h3 className="text-xl font-black text-slate-900 uppercase tracking-tighter">
             {initialData ? 'Update Item' : 'Add to Savings'}
           </h3>
-          <button 
-            onClick={onClose} 
-            className="p-3 bg-slate-100 text-slate-500 rounded-full ios-tap"
-          >
+          <button onClick={onClose} className="p-3 bg-slate-100 text-slate-500 rounded-full ios-tap">
             <X size={24} />
           </button>
         </div>
@@ -93,7 +88,6 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSubmit, on
             </div>
           )}
 
-          {/* Large Amount Input */}
           <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Amount</label>
             <div className="relative">
@@ -110,34 +104,20 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSubmit, on
             </div>
           </div>
 
-          {/* Transaction Type Toggle */}
           <div className="flex bg-slate-100 p-2 rounded-[2rem] border border-slate-200">
-            <button 
-              type="button" 
-              onClick={() => setFormData({...formData, type: TransactionType.DEPOSIT})} 
-              className={`flex-1 py-5 text-xs font-black uppercase tracking-widest rounded-[1.5rem] transition-all duration-300 ios-tap ${formData.type === TransactionType.DEPOSIT ? 'bg-white shadow-md text-green-600' : 'text-slate-400'}`}
-            >
-              Deposit (+)
-            </button>
-            <button 
-              type="button" 
-              onClick={() => setFormData({...formData, type: TransactionType.WITHDRAWAL})} 
-              className={`flex-1 py-5 text-xs font-black uppercase tracking-widest rounded-[1.5rem] transition-all duration-300 ios-tap ${formData.type === TransactionType.WITHDRAWAL ? 'bg-white shadow-md text-rose-600' : 'text-slate-400'}`}
-            >
-              Withdraw (-)
-            </button>
+            <button type="button" onClick={() => setFormData({...formData, type: TransactionType.DEPOSIT})} className={`flex-1 py-5 text-xs font-black uppercase tracking-widest rounded-[1.5rem] transition-all duration-300 ios-tap ${formData.type === TransactionType.DEPOSIT ? 'bg-white shadow-md text-green-600' : 'text-slate-400'}`}>Deposit (+)</button>
+            <button type="button" onClick={() => setFormData({...formData, type: TransactionType.WITHDRAWAL})} className={`flex-1 py-5 text-xs font-black uppercase tracking-widest rounded-[1.5rem] transition-all duration-300 ios-tap ${formData.type === TransactionType.WITHDRAWAL ? 'bg-white shadow-md text-rose-600' : 'text-slate-400'}`}>Withdraw (-)</button>
           </div>
 
-          {/* Categories Grid - Optimized for tap */}
           <div className="space-y-3">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Category</label>
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Category (Tap to select, 'X' to remove)</label>
             <div className="grid grid-cols-3 gap-2">
-              {[...DEFAULT_CATEGORIES, ...customCategories].map((cat) => (
+              {categories.map((cat) => (
                 <div key={cat} className="relative group">
                   <button 
                     type="button" 
                     onClick={() => { setIsCustomCategoryMode(false); setFormData({...formData, category: cat}); }} 
-                    className={`w-full py-4 rounded-2xl text-[10px] font-black uppercase tracking-tighter transition-all border ios-tap h-full flex items-center justify-center text-center px-1 ${
+                    className={`w-full py-4 rounded-2xl text-[10px] font-black uppercase tracking-tighter transition-all border ios-tap h-full flex items-center justify-center text-center px-2 ${
                       !isCustomCategoryMode && formData.category === cat 
                       ? 'bg-indigo-600 border-indigo-600 text-white shadow-lg' 
                       : 'bg-white border-slate-100 text-slate-500 shadow-sm'
@@ -145,15 +125,15 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSubmit, on
                   >
                     {cat}
                   </button>
-                  {customCategories.includes(cat) && (
-                    <button 
-                      type="button" 
-                      onClick={(e) => { e.stopPropagation(); onDeleteCategory(cat); }}
-                      className="absolute -top-1 -right-1 p-1.5 bg-rose-500 text-white rounded-full shadow-lg ios-tap"
-                    >
-                      <X size={10} strokeWidth={4} />
-                    </button>
-                  )}
+                  <button 
+                    type="button" 
+                    onClick={(e) => { e.stopPropagation(); onDeleteCategory(cat); }}
+                    className={`absolute -top-1.5 -right-1.5 p-2 rounded-full shadow-lg ios-tap z-10 ${
+                       !isCustomCategoryMode && formData.category === cat ? 'bg-indigo-800 text-white' : 'bg-rose-500 text-white'
+                    }`}
+                  >
+                    <X size={10} strokeWidth={4} />
+                  </button>
                 </div>
               ))}
               <button 
@@ -174,44 +154,27 @@ const TransactionForm: React.FC<TransactionFormProps> = ({ onClose, onSubmit, on
                 value={customCategoryInput} 
                 onChange={(e) => setCustomCategoryInput(e.target.value)} 
                 className="w-full px-6 py-5 bg-white border-2 border-indigo-500 rounded-2xl outline-none font-bold text-base mt-2" 
-                placeholder="What kind of spending?" 
+                placeholder="Type new category..." 
                 autoFocus 
               />
             )}
           </div>
 
-          {/* Description */}
           <div className="space-y-2">
-            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">What was it for?</label>
-            <input 
-              type="text" 
-              value={formData.comment} 
-              onChange={(e) => setFormData({...formData, comment: e.target.value})} 
-              className="w-full px-6 py-5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-indigo-500 focus:bg-white outline-none font-bold text-base transition-all" 
-              placeholder="e.g. Lunch with friends" 
-            />
+            <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Description</label>
+            <input type="text" value={formData.comment} onChange={(e) => setFormData({...formData, comment: e.target.value})} className="w-full px-6 py-5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-indigo-500 focus:bg-white outline-none font-bold text-base transition-all" placeholder="e.g. Allowance from Grandma" />
           </div>
 
-          {/* Date Picker */}
           <div className="space-y-2">
             <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">Date</label>
-            <input 
-              type="date" 
-              value={formData.date} 
-              onChange={(e) => setFormData({...formData, date: e.target.value})} 
-              className="w-full px-6 py-5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-indigo-500 focus:bg-white outline-none font-bold text-base transition-all" 
-            />
+            <input type="date" value={formData.date} onChange={(e) => setFormData({...formData, date: e.target.value})} className="w-full px-6 py-5 bg-slate-50 border-2 border-slate-100 rounded-2xl focus:border-indigo-500 focus:bg-white outline-none font-bold text-base transition-all" />
           </div>
 
-          <button 
-            type="submit" 
-            className="w-full bg-slate-900 text-white font-black uppercase tracking-widest py-6 rounded-[2rem] flex items-center justify-center space-x-3 shadow-2xl shadow-slate-200 ios-tap"
-          >
+          <button type="submit" className="w-full bg-slate-900 text-white font-black uppercase tracking-widest py-6 rounded-[2rem] flex items-center justify-center space-x-3 shadow-2xl shadow-slate-200 ios-tap">
             <Save size={24} strokeWidth={3} />
-            <span>Save to Logs</span>
+            <span>Save Entry</span>
           </button>
           
-          {/* Extra spacer for keyboard/safe areas */}
           <div className="h-6"></div>
         </form>
       </div>

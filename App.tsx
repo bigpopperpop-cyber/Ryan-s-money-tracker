@@ -15,9 +15,9 @@ const App: React.FC = () => {
     return saved ? JSON.parse(saved) : [];
   });
 
-  const [customCategories, setCustomCategories] = useState<string[]>(() => {
+  const [categories, setCategories] = useState<string[]>(() => {
     const saved = localStorage.getItem('ryan-money-monitor-categories');
-    return saved ? JSON.parse(saved) : [];
+    return saved ? JSON.parse(saved) : DEFAULT_CATEGORIES;
   });
 
   const [startingBalance, setStartingBalance] = useState<number>(() => {
@@ -60,13 +60,13 @@ const App: React.FC = () => {
   useEffect(() => {
     if (!isSharedMode) {
       localStorage.setItem('ryan-money-monitor-data', JSON.stringify(transactions));
-      localStorage.setItem('ryan-money-monitor-categories', JSON.stringify(customCategories));
+      localStorage.setItem('ryan-money-monitor-categories', JSON.stringify(categories));
       localStorage.setItem('ryan-money-monitor-start', startingBalance.toString());
       setShowSavedToast(true);
       const timer = setTimeout(() => setShowSavedToast(false), 2000);
       return () => clearTimeout(timer);
     }
-  }, [transactions, customCategories, startingBalance, isSharedMode]);
+  }, [transactions, categories, startingBalance, isSharedMode]);
 
   const totalBalance = useMemo(() => {
     return startingBalance + transactions.reduce((acc, t) => {
@@ -77,9 +77,12 @@ const App: React.FC = () => {
 
   const handleAddOrEditTransaction = (transaction: Transaction) => {
     if (isSharedMode) return;
-    if (!DEFAULT_CATEGORIES.includes(transaction.category) && !customCategories.includes(transaction.category)) {
-      setCustomCategories(prev => [...prev, transaction.category]);
+    
+    // Ensure the category used is in our shortcuts list
+    if (!categories.includes(transaction.category)) {
+      setCategories(prev => [...prev, transaction.category]);
     }
+
     if (editingTransaction) {
       setTransactions(prev => prev.map(t => t.id === transaction.id ? transaction : t));
     } else {
@@ -98,8 +101,8 @@ const App: React.FC = () => {
   };
 
   const handleDeleteCategory = (cat: string) => {
-    if (window.confirm(`Remove "${cat}" category?`)) {
-      setCustomCategories(prev => prev.filter(c => c !== cat));
+    if (window.confirm(`Remove "${cat}" from your shortcuts?`)) {
+      setCategories(prev => prev.filter(c => c !== cat));
     }
   };
 
@@ -160,7 +163,7 @@ const App: React.FC = () => {
         </div>
       )}
 
-      {/* Desktop Sidebar (Hidden on iPhone) */}
+      {/* Desktop Sidebar */}
       <aside className={`no-print hidden md:flex w-72 bg-slate-900 text-white p-8 flex-col space-y-8 h-screen ${isSharedMode ? 'pt-24' : ''}`}>
         <div className="flex items-center space-x-3">
           <div className="p-2.5 bg-indigo-500 rounded-2xl shadow-lg">
@@ -203,7 +206,6 @@ const App: React.FC = () => {
 
       {/* Main Container */}
       <div className={`flex-1 flex flex-col min-h-0 overflow-hidden relative ${isSharedMode ? 'mt-14' : ''}`}>
-        {/* Mobile Header (iPhone Optimized) */}
         <header className="md:hidden pt-[env(safe-area-inset-top,48px)] pb-4 px-6 bg-white/80 backdrop-blur-xl border-b border-slate-100 flex items-center justify-between sticky top-0 z-40">
            <div className="flex items-center space-x-2">
             <div className="p-1.5 bg-indigo-600 rounded-xl"><TrendingUp size={18} className="text-white" /></div>
@@ -218,7 +220,6 @@ const App: React.FC = () => {
 
         <main className="flex-1 overflow-y-auto px-4 pt-6 pb-32 md:p-12 hide-scrollbar">
           <div className="max-w-5xl mx-auto space-y-8">
-            {/* Balance Card Section */}
             <section className="flex flex-col md:flex-row md:items-end justify-between gap-4">
               <div className="hidden md:block">
                 <h2 className="text-3xl font-black text-slate-900 leading-tight">My <span className="text-indigo-600">Savings</span></h2>
@@ -250,7 +251,6 @@ const App: React.FC = () => {
           </div>
         </main>
 
-        {/* iPhone Floating Bottom Nav Bar */}
         <nav className="no-print md:hidden fixed bottom-6 left-6 right-6 h-20 bg-slate-900 rounded-[2.5rem] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.5)] border border-slate-800 flex items-center justify-between px-10 z-[80] animate-in slide-in-from-bottom-10 duration-500">
           <button 
             onClick={() => setActiveTab('dashboard')} 
@@ -279,7 +279,6 @@ const App: React.FC = () => {
         </nav>
       </div>
 
-      {/* Settings Modal (Initial Fund) */}
       {isSettingsOpen && (
         <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-slate-900/70 backdrop-blur-sm animate-in fade-in duration-300">
            <div className="bg-white w-full max-w-sm p-8 rounded-[3rem] shadow-2xl animate-in zoom-in-95 duration-200">
@@ -314,7 +313,7 @@ const App: React.FC = () => {
           onClose={() => { setIsFormOpen(false); setEditingTransaction(null); }} 
           onSubmit={handleAddOrEditTransaction} 
           onDeleteCategory={handleDeleteCategory}
-          customCategories={customCategories}
+          categories={categories}
           initialData={editingTransaction}
         />
       )}
