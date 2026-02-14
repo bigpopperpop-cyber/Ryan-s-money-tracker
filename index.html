@@ -12,16 +12,21 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <style>
       :root {
-        --app-height: 100%;
+        --app-height: 100dvh;
+      }
+      html, body {
+        height: var(--app-height);
+        margin: 0;
+        padding: 0;
+        overflow: hidden;
+        background-color: #f8fafc;
+        -webkit-text-size-adjust: 100%;
       }
       body {
         font-family: 'Inter', sans-serif;
-        background-color: #f8fafc;
         -webkit-tap-highlight-color: transparent;
-        height: var(--app-height);
-        overflow: hidden;
-        /* Standard iOS Safe Area padding */
-        padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+        position: fixed;
+        width: 100%;
       }
       @media print {
         .no-print { display: none !important; }
@@ -29,7 +34,6 @@
       }
       .print-only { display: none; }
       
-      /* Smooth transitions for tabs */
       .tab-content {
         animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       }
@@ -38,7 +42,6 @@
         to { opacity: 1; transform: translateY(0); }
       }
 
-      /* Native-like bounce for active states */
       .ios-tap:active {
         transform: scale(0.96);
         opacity: 0.8;
@@ -46,6 +49,31 @@
       
       .hide-scrollbar::-webkit-scrollbar { display: none; }
       .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+      /* Handling limited vertical space in landscape */
+      @media (max-height: 500px) {
+        .landscape-compact-nav {
+          height: 60px !important;
+          bottom: 12px !important;
+          padding-left: 30px !important;
+          padding-right: 30px !important;
+        }
+        .landscape-compact-nav svg {
+          width: 20px !important;
+          height: 20px !important;
+        }
+        .landscape-compact-nav span {
+          font-size: 8px !important;
+        }
+        .landscape-compact-nav .plus-btn {
+          margin-top: -30px !important;
+          padding: 10px !important;
+        }
+        .landscape-compact-nav .plus-btn svg {
+          width: 24px !important;
+          height: 24px !important;
+        }
+      }
     </style>
     <script type="importmap">
     {
@@ -63,7 +91,7 @@
     }
     </script>
   </head>
-  <body class="overscroll-none select-none bg-slate-50">
+  <body class="overscroll-none select-none">
     <div id="root" class="h-full"></div>
     <script type="module" src="index.tsx"></script>
   </body>
