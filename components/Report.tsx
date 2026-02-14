@@ -1,18 +1,19 @@
 
 import React, { useState, useMemo } from 'react';
 import { Transaction, TransactionType } from '../types';
-import { X, Printer, Calendar, Filter } from 'lucide-react';
+import { X, Printer, Calendar, Filter, PiggyBank } from 'lucide-react';
 
 interface ReportProps {
   transactions: Transaction[];
   balance: number;
+  startingBalance: number;
   onClose: () => void;
   isPrintView?: boolean;
 }
 
 type TimeframeOption = 'all' | '7days' | '30days' | 'thisMonth' | 'custom';
 
-const Report: React.FC<ReportProps> = ({ transactions, balance, onClose, isPrintView = false }) => {
+const Report: React.FC<ReportProps> = ({ transactions, balance, startingBalance, onClose, isPrintView = false }) => {
   const [timeframe, setTimeframe] = useState<TimeframeOption>('all');
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
@@ -60,12 +61,11 @@ const Report: React.FC<ReportProps> = ({ transactions, balance, onClose, isPrint
       <div className="max-w-4xl mx-auto">
         <div className="flex justify-between items-center border-b-2 border-slate-900 pb-6 mb-8">
           <div>
-            <h1 className="text-3xl font-black uppercase tracking-tighter text-slate-900 leading-none">Ryan's Savings Monitor</h1>
-            <p className="text-slate-500 font-bold mt-2">Statement Period: {timeframeLabel}</p>
-            <p className="text-[10px] font-black uppercase text-slate-400 mt-1">Generated {new Date().toLocaleDateString()}</p>
+            <h1 className="text-3xl font-black uppercase tracking-tighter text-slate-900 leading-none">Ryan's Savings Statement</h1>
+            <p className="text-slate-500 font-bold mt-2">Period: {timeframeLabel}</p>
           </div>
           <div className="text-right">
-            <span className="text-xs font-bold text-slate-400 uppercase mr-4">Total Balance</span>
+            <span className="text-xs font-bold text-slate-400 uppercase mr-4">Total Wealth</span>
             <span className="text-3xl font-black text-indigo-600">${balance.toFixed(2)}</span>
           </div>
         </div>
@@ -80,6 +80,14 @@ const Report: React.FC<ReportProps> = ({ transactions, balance, onClose, isPrint
             </tr>
           </thead>
           <tbody>
+            {timeframe === 'all' && (
+              <tr className="bg-slate-50 font-bold">
+                <td className="p-3 border text-sm italic">Initial</td>
+                <td className="p-3 border text-sm">System</td>
+                <td className="p-3 border text-sm">Starting Fund</td>
+                <td className="p-3 border text-sm text-right text-indigo-600">${startingBalance.toFixed(2)}</td>
+              </tr>
+            )}
             {filteredTransactions.map(t => (
               <tr key={t.id}>
                 <td className="p-3 border text-sm">{t.date}</td>
@@ -92,10 +100,6 @@ const Report: React.FC<ReportProps> = ({ transactions, balance, onClose, isPrint
             ))}
           </tbody>
         </table>
-
-        <div className="mt-12 text-center text-[10px] text-slate-400 uppercase tracking-widest font-black">
-          Ryan's Personal Savings Record
-        </div>
       </div>
     );
   }
@@ -107,7 +111,7 @@ const Report: React.FC<ReportProps> = ({ transactions, balance, onClose, isPrint
         <div className="p-6 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between bg-white gap-4">
           <div>
             <h3 className="text-2xl font-black text-slate-900 tracking-tight">Statement Builder</h3>
-            <p className="text-sm font-medium text-slate-500">Review your savings history</p>
+            <p className="text-sm font-medium text-slate-500">Review your savings progress</p>
           </div>
           <div className="flex items-center space-x-3">
             <button 
@@ -115,12 +119,9 @@ const Report: React.FC<ReportProps> = ({ transactions, balance, onClose, isPrint
               className="flex-1 md:flex-none px-8 py-4 bg-indigo-600 text-white font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-indigo-200 hover:bg-indigo-700 transition active:scale-95 flex items-center justify-center space-x-3"
             >
               <Printer size={20} strokeWidth={3} />
-              <span>Print Report</span>
+              <span>Print</span>
             </button>
-            <button 
-              onClick={onClose} 
-              className="p-3 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-full transition"
-            >
+            <button onClick={onClose} className="p-3 text-slate-400 hover:text-slate-900 hover:bg-slate-100 rounded-full transition">
               <X size={28} />
             </button>
           </div>
@@ -155,24 +156,6 @@ const Report: React.FC<ReportProps> = ({ transactions, balance, onClose, isPrint
                   </button>
                 ))}
              </div>
-
-             {timeframe === 'custom' && (
-               <div className="flex items-center space-x-3 animate-in slide-in-from-left-4">
-                 <input 
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none"
-                 />
-                 <span className="text-slate-400 font-bold">to</span>
-                 <input 
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold outline-none"
-                 />
-               </div>
-             )}
           </div>
         </div>
 
@@ -183,12 +166,10 @@ const Report: React.FC<ReportProps> = ({ transactions, balance, onClose, isPrint
              <div className="flex flex-col md:flex-row justify-between items-start border-b-4 border-slate-900 pb-10 mb-12 gap-8">
               <div>
                 <h1 className="text-4xl font-black uppercase tracking-tighter text-slate-900 leading-none">Ryan's Savings</h1>
-                <div className="mt-4">
-                  <p className="text-slate-500 font-black text-xs uppercase tracking-widest">{timeframeLabel}</p>
-                </div>
+                <p className="text-slate-500 font-black text-xs uppercase tracking-widest mt-2">{timeframeLabel}</p>
               </div>
               <div className="bg-indigo-600 px-8 py-6 rounded-[2rem] shadow-xl shadow-indigo-100 min-w-[200px]">
-                <p className="text-[10px] font-black text-indigo-200 uppercase tracking-[0.2em] mb-1">Current Balance</p>
+                <p className="text-[10px] font-black text-indigo-200 uppercase tracking-[0.2em] mb-1">Total Wealth</p>
                 <p className="text-4xl font-black text-white">${balance.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
               </div>
             </div>
@@ -203,11 +184,28 @@ const Report: React.FC<ReportProps> = ({ transactions, balance, onClose, isPrint
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
+                {timeframe === 'all' && (
+                  <tr className="bg-indigo-50/30">
+                    <td className="py-5 px-2 text-sm text-indigo-400 font-black uppercase italic">Initial</td>
+                    <td className="py-5 px-2">
+                      <span className="px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-tighter bg-indigo-600 text-white">
+                        SETUP
+                      </span>
+                    </td>
+                    <td className="py-5 px-2 text-sm font-bold text-slate-900 flex items-center space-x-2">
+                      <PiggyBank size={14} className="text-indigo-600" />
+                      <span>Starting Fund</span>
+                    </td>
+                    <td className="py-5 px-2 text-base font-black text-right text-indigo-600">
+                      ${startingBalance.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                    </td>
+                  </tr>
+                )}
                 {filteredTransactions.map(t => (
                   <tr key={t.id}>
                     <td className="py-5 px-2 text-sm text-slate-500 font-medium">{t.date}</td>
                     <td className="py-5 px-2">
-                      <span className="px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-tighter bg-indigo-50 text-indigo-600">
+                      <span className="px-2 py-1 rounded-md text-[9px] font-black uppercase tracking-tighter bg-slate-100 text-slate-600">
                         {t.category}
                       </span>
                     </td>
@@ -219,13 +217,6 @@ const Report: React.FC<ReportProps> = ({ transactions, balance, onClose, isPrint
                 ))}
               </tbody>
             </table>
-
-            {filteredTransactions.length === 0 && (
-              <div className="py-32 flex flex-col items-center justify-center text-center">
-                <Calendar size={48} className="text-slate-200 mb-4" />
-                <p className="text-slate-900 font-black uppercase text-xs tracking-widest">Empty Statement</p>
-              </div>
-            )}
           </div>
         </div>
       </div>
