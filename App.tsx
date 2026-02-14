@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Plus, LayoutDashboard, History, FileText, TrendingUp, Download, Upload, CheckCircle, Share2, X, Info, Settings2, Save, DollarSign } from 'lucide-react';
+import { Plus, LayoutDashboard, History, FileText, TrendingUp, Download, Upload, CheckCircle, Share2, X, Info, Settings2, Save, DollarSign, RefreshCcw } from 'lucide-react';
 import { Transaction, AccountType, TransactionType, DEFAULT_CATEGORIES } from './types';
 import Dashboard from './components/Dashboard';
 import Ledger from './components/Ledger';
@@ -37,6 +37,11 @@ const App: React.FC = () => {
   const [isSharedMode, setIsSharedMode] = useState(false);
   const [tempStartBalance, setTempStartBalance] = useState<string>(startingBalance.toString());
   
+  // Pull-to-refresh state
+  const [pullDistance, setPullDistance] = useState(0);
+  const [isPulling, setIsPulling] = useState(false);
+  const startY = useRef(0);
+  const mainRef = useRef<HTMLElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -75,14 +80,44 @@ const App: React.FC = () => {
     }, 0);
   }, [transactions, startingBalance]);
 
+  // Pull to refresh logic
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (mainRef.current && mainRef.current.scrollTop === 0) {
+      startY.current = e.touches[0].pageY;
+      setIsPulling(true);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isPulling) return;
+    const currentY = e.touches[0].pageY;
+    const diff = currentY - startY.current;
+    
+    if (diff > 0 && mainRef.current && mainRef.current.scrollTop === 0) {
+      // Add resistance to the pull
+      const resistedDiff = Math.pow(diff, 0.8);
+      setPullDistance(Math.min(resistedDiff, 100));
+      // Prevent default browser refresh/scroll behavior during pull
+      if (diff > 10) e.preventDefault();
+    } else {
+      setIsPulling(false);
+      setPullDistance(0);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (pullDistance > 60) {
+      fetchInsights();
+    }
+    setIsPulling(false);
+    setPullDistance(0);
+  };
+
   const handleAddOrEditTransaction = (transaction: Transaction) => {
     if (isSharedMode) return;
-    
-    // Ensure the category used is in our shortcuts list
     if (!categories.includes(transaction.category)) {
       setCategories(prev => [...prev, transaction.category]);
     }
-
     if (editingTransaction) {
       setTransactions(prev => prev.map(t => t.id === transaction.id ? transaction : t));
     } else {
@@ -163,6 +198,20 @@ const App: React.FC = () => {
         </div>
       )}
 
+      {/* Pull-to-refresh Indicator */}
+      <div 
+        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-center pointer-events-none transition-all duration-200"
+        style={{ 
+          height: `${pullDistance}px`, 
+          opacity: pullDistance / 60,
+          transform: `translateY(${pullDistance > 20 ? 0 : -20}px)` 
+        }}
+      >
+        <div className={`p-2 bg-white rounded-full shadow-lg border border-slate-100 ${isLoadingInsight ? 'animate-spin' : ''}`} style={{ transform: `rotate(${pullDistance * 3}deg)` }}>
+          <RefreshCcw size={20} className="text-indigo-600" />
+        </div>
+      </div>
+
       {/* Desktop Sidebar */}
       <aside className={`no-print hidden md:flex w-72 bg-slate-900 text-white p-8 flex-col space-y-8 h-screen ${isSharedMode ? 'pt-24' : ''}`}>
         <div className="flex items-center space-x-3">
@@ -205,7 +254,10 @@ const App: React.FC = () => {
       </aside>
 
       {/* Main Container */}
-      <div className={`flex-1 flex flex-col min-h-0 overflow-hidden relative ${isSharedMode ? 'mt-14' : ''}`}>
+      <div 
+        className={`flex-1 flex flex-col min-h-0 overflow-hidden relative transition-transform duration-200 ${isSharedMode ? 'mt-14' : ''}`}
+        style={{ transform: `translateY(${pullDistance}px)` }}
+      >
         <header className="md:hidden pt-[env(safe-area-inset-top,48px)] pb-4 px-6 bg-white/80 backdrop-blur-xl border-b border-slate-100 flex items-center justify-between sticky top-0 z-40">
            <div className="flex items-center space-x-2">
             <div className="p-1.5 bg-indigo-600 rounded-xl"><TrendingUp size={18} className="text-white" /></div>
@@ -218,7 +270,13 @@ const App: React.FC = () => {
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto px-4 pt-6 pb-32 md:p-12 hide-scrollbar">
+        <main 
+          ref={mainRef}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          className="flex-1 overflow-y-auto px-4 pt-6 pb-32 md:p-12 hide-scrollbar"
+        >
           <div className="max-w-5xl mx-auto space-y-8">
             <section className="flex flex-col md:flex-row md:items-end justify-between gap-4">
               <div className="hidden md:block">
