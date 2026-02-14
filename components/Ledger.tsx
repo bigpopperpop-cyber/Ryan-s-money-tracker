@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { Transaction, TransactionType, AccountType } from '../types';
-import { Edit3, Trash2, Search, Calendar, Landmark } from 'lucide-react';
+import { Transaction, TransactionType } from '../types';
+import { Edit3, Trash2, Search, Calendar, Star } from 'lucide-react';
 
 interface LedgerProps {
   transactions: Transaction[];
@@ -13,15 +13,13 @@ interface LedgerProps {
 const Ledger: React.FC<LedgerProps> = ({ transactions, onEdit, onDelete, isReadOnly = false }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
-  const [filterAccount, setFilterAccount] = useState<string>('all');
 
   const filteredTransactions = transactions
     .filter(t => {
       const matchesSearch = t.comment.toLowerCase().includes(searchTerm.toLowerCase()) || 
                            t.category.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesType = filterType === 'all' || t.type === filterType;
-      const matchesAccount = filterAccount === 'all' || t.account === filterAccount;
-      return matchesSearch && matchesType && matchesAccount;
+      return matchesSearch && matchesType;
     })
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
@@ -44,7 +42,7 @@ const Ledger: React.FC<LedgerProps> = ({ transactions, onEdit, onDelete, isReadO
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
             <input 
               type="text" 
-              placeholder="Filter by comment or category..." 
+              placeholder="Search history..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-12 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none w-full text-sm font-medium"
@@ -52,13 +50,13 @@ const Ledger: React.FC<LedgerProps> = ({ transactions, onEdit, onDelete, isReadO
           </div>
           <div className="flex gap-2">
             <select 
-              value={filterAccount}
-              onChange={(e) => setFilterAccount(e.target.value)}
-              className="px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none text-xs font-bold uppercase tracking-wider appearance-none min-w-[120px]"
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value)}
+              className="px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-indigo-500 outline-none text-xs font-bold uppercase tracking-wider appearance-none min-w-[140px]"
             >
-              <option value="all">Accounts</option>
-              <option value={AccountType.CHECKING}>Checking</option>
-              <option value={AccountType.SAVINGS}>Savings</option>
+              <option value="all">All Entries</option>
+              <option value={TransactionType.DEPOSIT}>Deposits Only</option>
+              <option value={TransactionType.WITHDRAWAL}>Withdrawals Only</option>
             </select>
           </div>
         </div>
@@ -70,9 +68,6 @@ const Ledger: React.FC<LedgerProps> = ({ transactions, onEdit, onDelete, isReadO
             <div className="flex justify-between items-start mb-4">
               <div className="flex flex-col">
                 <div className="flex items-center space-x-2 mb-2">
-                   <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${t.account === AccountType.CHECKING ? 'bg-indigo-50 text-indigo-500' : 'bg-slate-900 text-white'}`}>
-                    {t.account}
-                  </span>
                   <span className={`px-2 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${getCategoryColor(t.category)}`}>
                     {t.category}
                   </span>
@@ -94,25 +89,25 @@ const Ledger: React.FC<LedgerProps> = ({ transactions, onEdit, onDelete, isReadO
                     className="flex items-center space-x-1.5 px-4 py-2 bg-slate-50 text-slate-600 rounded-xl text-[10px] font-black uppercase transition active:scale-95 border border-slate-100"
                   >
                     <Edit3 size={14} strokeWidth={2.5} />
-                    <span>Modify</span>
+                    <span>Edit</span>
                   </button>
                   <button 
                     onClick={() => onDelete(t.id)}
                     className="flex items-center space-x-1.5 px-4 py-2 bg-rose-50 text-rose-600 rounded-xl text-[10px] font-black uppercase transition active:scale-95 border border-rose-100"
                   >
                     <Trash2 size={14} strokeWidth={2.5} />
-                    <span>Erase</span>
+                    <span>Delete</span>
                   </button>
                 </div>
                 <div className="w-8 h-8 flex items-center justify-center bg-slate-50 rounded-full">
-                  {t.account === AccountType.SAVINGS ? <Landmark size={14} className="text-indigo-400" /> : <Calendar size={14} className="text-slate-400" />}
+                  <Star size={14} className="text-indigo-400" />
                 </div>
               </div>
             )}
             {isReadOnly && (
                <div className="flex items-center justify-end pt-4 border-t border-slate-50">
                   <div className="w-8 h-8 flex items-center justify-center bg-slate-50 rounded-full">
-                    {t.account === AccountType.SAVINGS ? <Landmark size={14} className="text-indigo-400" /> : <Calendar size={14} className="text-slate-400" />}
+                    <Star size={14} className="text-indigo-400" />
                   </div>
                </div>
             )}
@@ -122,7 +117,7 @@ const Ledger: React.FC<LedgerProps> = ({ transactions, onEdit, onDelete, isReadO
             <div className="inline-flex p-6 bg-slate-50 rounded-full">
               <Search size={32} className="text-slate-200" />
             </div>
-            <p className="text-slate-400 font-black uppercase text-xs tracking-[0.2em]">No logs found</p>
+            <p className="text-slate-400 font-black uppercase text-xs tracking-[0.2em]">Zero results</p>
           </div>
         )}
       </div>

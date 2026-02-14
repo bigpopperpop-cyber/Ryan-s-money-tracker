@@ -1,35 +1,35 @@
+
 import React, { useMemo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Transaction, AccountType, TransactionType, ChartDataPoint } from '../types';
+import { Transaction, TransactionType, ChartDataPoint } from '../types';
 import { Sparkles, RefreshCw, ArrowUpRight } from 'lucide-react';
 
 interface DashboardProps {
   transactions: Transaction[];
-  balances: { checking: number, savings: number };
+  balance: number;
   aiInsight: string;
   onRefreshInsight: () => void;
   isLoadingInsight: boolean;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ transactions, balances, aiInsight, onRefreshInsight, isLoadingInsight }) => {
+const Dashboard: React.FC<DashboardProps> = ({ transactions, balance, aiInsight, onRefreshInsight, isLoadingInsight }) => {
   const chartData = useMemo(() => {
-    const savingsTransactions = transactions
-      .filter(t => t.account === AccountType.SAVINGS)
-      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    if (transactions.length === 0) return [];
 
-    if (savingsTransactions.length === 0) return [];
+    const sortedTransactions = [...transactions].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     let runningBalance = 0;
     const data: ChartDataPoint[] = [];
 
     const dailyMap = new Map<string, number>();
-    savingsTransactions.forEach(t => {
+    sortedTransactions.forEach(t => {
       const amount = t.type === TransactionType.DEPOSIT ? t.amount : -t.amount;
       dailyMap.set(t.date, (dailyMap.get(t.date) || 0) + amount);
     });
 
     const sortedDates = Array.from(dailyMap.keys()).sort();
     
+    // Add a baseline if we only have one date
     if (sortedDates.length === 1) {
       const firstDate = new Date(sortedDates[0]);
       const prevDate = new Date(firstDate);
@@ -54,8 +54,8 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, balances, aiInsight
       <div className="lg:col-span-2 bg-white p-6 md:p-10 rounded-[2.5rem] shadow-sm border border-slate-100">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h3 className="text-xl font-black text-slate-900 tracking-tight">Performance</h3>
-            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Savings Growth</p>
+            <h3 className="text-xl font-black text-slate-900 tracking-tight">Net Growth</h3>
+            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Savings Performance</p>
           </div>
           <div className="p-3 bg-indigo-50 rounded-2xl">
             <ArrowUpRight size={20} className="text-indigo-600" />
@@ -111,7 +111,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, balances, aiInsight
             </ResponsiveContainer>
           ) : (
             <div className="h-full flex flex-col items-center justify-center text-slate-400 bg-slate-50/50 border-2 border-dashed border-slate-200 rounded-[2rem]">
-              <p className="font-black text-sm uppercase tracking-widest opacity-40">Awaiting Data</p>
+              <p className="font-black text-sm uppercase tracking-widest opacity-40">Add your first record</p>
             </div>
           )}
         </div>
@@ -125,7 +125,7 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, balances, aiInsight
               <div className="w-8 h-8 bg-indigo-500 rounded-lg flex items-center justify-center">
                 <Sparkles size={16} fill="white" />
               </div>
-              <h3 className="text-lg font-black tracking-tight uppercase">AI Coach</h3>
+              <h3 className="text-lg font-black tracking-tight uppercase">Smart Tips</h3>
             </div>
             <button 
               onClick={onRefreshInsight} 
@@ -138,18 +138,18 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, balances, aiInsight
 
           <div className="min-h-[160px] relative">
             {aiInsight ? (
-              <div className="text-sm font-medium leading-relaxed text-slate-300 bg-slate-800/50 p-6 rounded-3xl border border-white/5">
+              <div className="text-sm font-medium leading-relaxed text-slate-300 bg-slate-800/50 p-6 rounded-3xl border border-white/5 whitespace-pre-wrap">
                 {aiInsight}
               </div>
             ) : (
               <div className="text-center py-10 space-y-4">
-                <p className="text-slate-500 text-sm font-bold">Needs your activity data to provide advice.</p>
+                <p className="text-slate-500 text-sm font-bold">Needs more activity to build your financial profile.</p>
                 <button 
                   onClick={onRefreshInsight}
                   disabled={transactions.length === 0}
                   className="w-full py-4 bg-indigo-600 text-white font-black rounded-2xl shadow-lg transition active:scale-95 disabled:bg-slate-800 disabled:text-slate-600"
                 >
-                  Generate Insights
+                  Analyze Habits
                 </button>
               </div>
             )}
@@ -158,17 +158,17 @@ const Dashboard: React.FC<DashboardProps> = ({ transactions, balances, aiInsight
 
         <div className="mt-8 pt-8 border-t border-slate-800">
            <div className="flex justify-between items-center mb-4">
-              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Savings Progress</p>
-              <span className="text-[10px] font-black text-indigo-400 bg-indigo-400/10 px-2 py-1 rounded-md uppercase">Level 1</span>
+              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Mastery Progress</p>
+              <span className="text-[10px] font-black text-indigo-400 bg-indigo-400/10 px-2 py-1 rounded-md uppercase">Novice</span>
            </div>
            <div className="flex justify-between items-end mb-3">
-              <span className="text-2xl font-black">${balances.savings.toLocaleString()}</span>
-              <span className="text-xs font-bold text-slate-500">Goal: $1,000</span>
+              <span className="text-2xl font-black">${balance.toLocaleString()}</span>
+              <span className="text-xs font-bold text-slate-500">Next Milestone: $1k</span>
            </div>
            <div className="h-3 w-full bg-slate-800 rounded-full overflow-hidden p-0.5">
               <div 
                 className="bg-gradient-to-r from-indigo-500 to-indigo-400 h-full rounded-full transition-all duration-1000 ease-out shadow-[0_0_15px_rgba(99,102,241,0.5)]" 
-                style={{ width: `${Math.min((balances.savings / 1000) * 100, 100)}%` }}
+                style={{ width: `${Math.min((balance / 1000) * 100, 100)}%` }}
               ></div>
            </div>
         </div>

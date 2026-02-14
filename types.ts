@@ -1,6 +1,5 @@
 
 export enum AccountType {
-  CHECKING = 'Checking',
   SAVINGS = 'Savings'
 }
 
@@ -27,7 +26,7 @@ export interface Transaction {
   type: TransactionType;
   account: AccountType;
   comment: string;
-  category: string; // Changed from enum to string for custom entries
+  category: string;
 }
 
 export interface ChartDataPoint {
